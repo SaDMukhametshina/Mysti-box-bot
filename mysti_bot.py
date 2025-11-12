@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters, CallbackContext
 
 # Получаем токен из переменных окружения Railway
 TOKEN = os.getenv('TOKEN')
@@ -120,7 +120,7 @@ def handle_message(update: Update, context: CallbackContext):
                 "• Редкие и лимитированные вкусы\n"
                 "• Всегда свежие продукты\n\n"
                 "Это не просто коробка — это вкусное путешествие, эмоции и праздник внутри!🎴\n\n"
-                "<b>Выбеri способ заказа:</b>",
+                "<b>Выбери способ заказа:</b>",
                 reply_markup=order_markup,
                 parse_mode='HTML'
             )
@@ -337,7 +337,7 @@ def main():
         
         # Обработчики команд
         dispatcher.add_handler(CommandHandler("start", start))
-        dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
+        dispatcher.add_handler(MessageHandler(filters.TEXT, handle_message))
         
         # Обработчик ошибок
         dispatcher.add_error_handler(error_handler)
