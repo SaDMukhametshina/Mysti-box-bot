@@ -82,7 +82,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
-        "• Pocky Strawberry — культовые японские палочки\n"
+                        "• Pocky Strawberry — культовые японские палочки\n"
                         "• Hershey's — легендарный белый шоколад\n"
                         "• Reese's Peanut Butter — топ США с арахисовой пастой\n"
                         "• KitKat Peanut Butter — редкий вкус КитКата\n"
