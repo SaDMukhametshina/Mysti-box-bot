@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
 # Получаем токен из переменных окружения Railway
 TOKEN = os.getenv('TOKEN', '8299693466:AAG0PQRjvAysOyX7MRlebiTWaxLzcL5hcjE')
@@ -34,11 +34,11 @@ IMAGE_URLS = {
 }
 
 # Команда /start
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     print(f"🎯 Получена команда /start от {user.first_name}")
     
-    update.message.reply_photo(
+    await update.message.reply_photo(
         photo=IMAGE_URLS["start"],
         caption=f"🪐 Привет, {user.first_name}! Добро пожаловать в Mysti Box!\n\n"
                 "Мы собрали для вас самые вкусные снеки из США 🇺🇸, Кореи 🇰🇷, Японии 🇯🇵, Испании 🇪🇸, Германии 🇩🇪, Китая 🇨🇳 и многих других стран 🌏\n\n"
@@ -48,12 +48,12 @@ def start(update: Update, context: CallbackContext):
     )
 
 # Обработка текстовых сообщений
-def handle_message(update: Update, context: CallbackContext):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     
     if text == "❔ Что такое Mysti Box":
         if IMAGE_URLS["about"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["about"],
                 caption="<b>Mysti Box: Мир вкусов у вас на пороге!</b>🌍✨\n\n"
                         "Представьте: вы открываете коробку, а внутри — целое путешествие. Хрустящие чипсы, которые обожают в Китае... Шоколадка, ради которой стоит лететь в США... Напиток, который пьют на пляжах Испании... ✨\n\n"
@@ -67,7 +67,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "<b>Mysti Box: Мир вкусов у вас на пороге!</b>🌍✨\n\n"
                 "Представьте: вы открываете коробку, а внутри — целое путешествие. Хрустящие чипсы, которые обожают в Китае... Шоколадка, ради которой стоит лететь в США... Напиток, который пьют на пляжах Испании... ✨\n\n"
                 "Это не мечта, это <b>Mysti Box!</b>\n\n"
@@ -85,7 +85,7 @@ def handle_message(update: Update, context: CallbackContext):
         order_markup = ReplyKeyboardMarkup(order_keyboard, resize_keyboard=True)
         
         if IMAGE_URLS["order"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["order"],
                 caption="<b>Mysti Box Premium - 3500₽</b>\n\n"
                         "💌 Что входит:\n"
@@ -100,7 +100,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "<b>Mysti Box Premium - 3500₽</b>\n\n"
                 "💌 Что входит:\n"
                 "• 15-20 разных снеков из разных стран\n"
@@ -116,7 +116,7 @@ def handle_message(update: Update, context: CallbackContext):
     
     elif text == "🧧 Заказать за 3500₽":
         if IMAGE_URLS["order"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["order"],
                 caption="🎴 Отлично! Оформляем твой <b>Mysti Box</b>!\n\n"
                         "Для заказа напиши нам:\n"
@@ -126,12 +126,12 @@ def handle_message(update: Update, context: CallbackContext):
                         "• Имя и фамилию\n"
                         "• Адрес и способ доставки\n"
                         "• Предпочтения (если есть)\n\n"
-                        "Менеджер свяжется с тобой в течение 15 минут! ⚡️",
+                        "Менеджер свяжется с тобой в течение 15 минут! ⚡",
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "🎴 Отлично! Оформляем твой <b>Mysti Box</b>!\n\n"
                 "Для заказа напиши нам:\n"
                 "📱 Instagram: mystibox.ru\n"
@@ -140,38 +140,38 @@ def handle_message(update: Update, context: CallbackContext):
                 "• Имя и фамилию\n"
                 "• Адрес и способ доставки\n"
                 "• Предпочтения (если есть)\n\n"
-                "Менеджер свяжется с тобой в течение 15 минут! ⚡️",
+                "Менеджер свяжется с тобой в течение 15 минут! ⚡",
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
     
     elif text == "📞 Связаться с менеджером":
         if IMAGE_URLS["contacts"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["contacts"],
                 caption="<b>📞 Свяжись с нашим менеджером:</b>\n\n"
                         "📱 Instagram: @mystibox.ru\n"
                         "💬 Telegram: @mukhametshinas\n\n"
-                        "⚡️ Отвечаем в течение 15 минут!",
+                        "⚡ Отвечаем в течение 15 минут!",
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "<b>📞 Свяжись с нашим менеджером:</b>\n\n"
                 "📱 Instagram: @mystibox.ru\n"
                 "💬 Telegram: @mukhametshinas\n\n"
-                "⚡️ Отвечаем в течение 15 минут!",
+                "⚡ Отвечаем в течение 15 минут!",
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
     
     elif text == "🌍 Ассортимент":
         if IMAGE_URLS["assortment"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["assortment"],
                 caption="<b>🍫 Сладости и батончики:</b>\n"
-                        "• Pocky Strawberry — культовые японские палочки\n"
+                "• Pocky Strawberry — культовые японские палочки\n"
                         "• Hershey's — легендарный белый шоколад\n"
                         "• Reese's Peanut Butter — топ США с арахисовой пастой\n"
                         "• KitKat Peanut Butter — редкий вкус КитКата\n"
@@ -198,7 +198,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "<b>🍫 Сладости и батончики:</b>\n"
                 "• Pocky Strawberry — культовые японские палочки\n"
                 "• Hershey's — легендарный белый шоколад\n"
@@ -229,7 +229,7 @@ def handle_message(update: Update, context: CallbackContext):
     
     elif text == "📞 Контакты":
         if IMAGE_URLS["contacts"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["contacts"],
                 caption="<b>📞 Наши контакты:</b>\n\n"
                         "📱 Instagram: mystibox.ru\n"
@@ -239,7 +239,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "<b>📞 Наши контакты:</b>\n\n"
                 "📱 Instagram: mystibox.ru\n"
                 "💬 Telegram: @mystibox1\n\n"
@@ -250,10 +250,10 @@ def handle_message(update: Update, context: CallbackContext):
     
     elif text == "✨ Акции и скидки":
         if IMAGE_URLS["promo"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["promo"],
                 caption="📢 <b>Текущие акции:</b>\n\n"
-                "• ПРИВЕДИ ДРУГА — скидка <b>300₽</b> вам обоим\n" 
+                        "• ПРИВЕДИ ДРУГА — скидка <b>300₽</b> вам обоим\n" 
                         "💌 Идеально как подарок, потому что:\n"
                         "✔️ дарит эмоции, удивление и эффект 'вау'\n"
                         "✔️ подходит для любого возраста и случая\n"
@@ -264,7 +264,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "📢 <b>Текущие акции:</b>\n\n"
                 "• ПРИВЕДИ ДРУГА — скидка <b>300₽</b> вам обоим\n" 
                 "💌 Идеально как подарок, потому что:\n"
@@ -279,7 +279,7 @@ def handle_message(update: Update, context: CallbackContext):
     
     elif text == "🛫 Доставка":
         if IMAGE_URLS["delivery"]:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=IMAGE_URLS["delivery"],
                 caption="🛫 <b>Способы доставки:</b>\n\n"
                         "• СДЭК — 3-5 дней по России\n"
@@ -291,7 +291,7 @@ def handle_message(update: Update, context: CallbackContext):
                 parse_mode='HTML'
             )
         else:
-            update.message.reply_text(
+            await update.message.reply_text(
                 "🛫 <b>Способы доставки:</b>\n\n"
                 "• СДЭК — 3-5 дней по России\n"
                 "• Почта России — 5-7 дней\n" 
@@ -303,38 +303,36 @@ def handle_message(update: Update, context: CallbackContext):
             )
     
     elif text == "↩️ Назад":
-        update.message.reply_text(
+        await update.message.reply_text(
             "Возвращаемся в главное меню:",
             reply_markup=reply_markup
         )
     
     else:
-        update.message.reply_text(
+        await update.message.reply_text(
             "Не совсем понял тебя ☺️ Выбери один из разделов меню:",
             reply_markup=reply_markup
         )
 
 # Обработка ошибок
-def error_handler(update: Update, context: CallbackContext):
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.error(f"Ошибка: {context.error}")
 
 # Запуск бота
 def main():
-    updater = Updater(TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
+    application = Application.builder().token(TOKEN).build()
     
     # Обработчики команд
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT, handle_message))
     
     # Обработчик ошибок
-    dispatcher.add_error_handler(error_handler)
+    application.add_error_handler(error_handler)
     
     print("🎴 Бот Mysti Box запущен! Работает 24/7 на Railway!")
     
     # Запускаем бота
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
