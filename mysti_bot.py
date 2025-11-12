@@ -1,7 +1,7 @@
 import os
 import logging
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # Безопасное получение токена
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 print("🚀 Mysti Box Bot запускается на Railway...")
 
 # Меры безопасности
-AUTHORIZED_USERS = set()  # Можно добавить ID авторизованных пользователей
-BLOCKED_USERS = set()     # Заблокированные пользователи
+AUTHORIZED_USERS = set()
+BLOCKED_USERS = set()
 
 # Главное меню
 main_keyboard = [
@@ -63,152 +63,219 @@ TEXTS = {
 
 # 🔒 Функции безопасности
 def is_user_blocked(user_id: int) -> bool:
-    """Проверка, заблокирован ли пользователь"""
     return user_id in BLOCKED_USERS
 
 def log_security_event(user_id: int, username: str, action: str):
-    """Логирование событий безопасности"""
     logger.warning(f"🔒 Событие безопасности: user_id={user_id}, username={username}, action={action}")
 
-def safe_send_message(update: Update, text: str, photo_url: str = None, reply_markup=None):
-    """Безопасная отправка сообщения с обработкой ошибок"""
-    try:
-        if photo_url:
-            return update.message.reply_photo(
-                photo=photo_url,
-                caption=text,
-                reply_markup=reply_markup,
-                parse_mode='HTML'
-            )
-        else:
-            return update.message.reply_text(
-                text,
-                reply_markup=reply_markup,
-                parse_mode='HTML'
-            )
-    except Exception as e:
-        logger.error(f"Ошибка отправки сообщения: {e}")
-        # Пытаемся отправить без фото в случае ошибки
-        try:
-            update.message.reply_text(
-                text,
-                reply_markup=reply_markup,
-                parse_mode='HTML'
-            )
-        except Exception as e2:
-            logger.error(f"Критическая ошибка отправки: {e2}")
-
 # Команда /start
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     
-    # 🔒 Проверка безопасности
     if is_user_blocked(user.id):
         log_security_event(user.id, user.username, "BLOCKED_USER_TRY_ACCESS")
         return
     
     logger.info(f"🎯 Пользователь {user.first_name} (ID: {user.id}) запустил бота")
     
-    safe_send_message(
-        update,
-        TEXTS["start"].format(user_name=user.first_name),
-        IMAGE_URLS["start"],
-        reply_markup
-    )
+    if IMAGE_URLS["start"]:
+        await update.message.reply_photo(
+            photo=IMAGE_URLS["start"],
+            caption=TEXTS["start"].format(user_name=user.first_name),
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    else:
+        await update.message.reply_text(
+            TEXTS["start"].format(user_name=user.first_name),
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
 
 # Обработка текстовых сообщений
-def handle_message(update: Update, context: CallbackContext):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text
     
-    # 🔒 Проверка безопасности
     if is_user_blocked(user.id):
         log_security_event(user.id, user.username, "BLOCKED_USER_TRY_SEND_MESSAGE")
         return
     
-    # Логируем действия пользователя
     logger.info(f"👤 Пользователь {user.first_name} (ID: {user.id}): {text}")
     
     if text == "❔ Что такое Mysti Box":
-        safe_send_message(update, TEXTS["about"], IMAGE_URLS["about"], reply_markup)
+        if IMAGE_URLS["about"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["about"],
+                caption=TEXTS["about"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["about"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "📦 Заказать бокс":
         order_keyboard = [["🧧 Заказать за 3500₽", "📞 Связаться с менеджером"], ["↩️ Назад"]]
         order_markup = ReplyKeyboardMarkup(order_keyboard, resize_keyboard=True)
-        safe_send_message(update, TEXTS["order_main"], IMAGE_URLS["order"], order_markup)
+        
+        if IMAGE_URLS["order"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["order"],
+                caption=TEXTS["order_main"],
+                reply_markup=order_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["order_main"],
+                reply_markup=order_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "🧧 Заказать за 3500₽":
-        safe_send_message(update, TEXTS["order_confirmation"], IMAGE_URLS["order"], reply_markup)
+        if IMAGE_URLS["order"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["order"],
+                caption=TEXTS["order_confirmation"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["order_confirmation"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "📞 Связаться с менеджером":
-        safe_send_message(update, TEXTS["manager_contact"], IMAGE_URLS["contacts"], reply_markup)
+        if IMAGE_URLS["contacts"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["contacts"],
+                caption=TEXTS["manager_contact"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["manager_contact"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "🌍 Ассортимент":
-        safe_send_message(update, TEXTS["assortment"], IMAGE_URLS["assortment"], reply_markup)
+        if IMAGE_URLS["assortment"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["assortment"],
+                caption=TEXTS["assortment"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["assortment"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "📞 Контакты":
-        safe_send_message(update, TEXTS["contacts"], IMAGE_URLS["contacts"], reply_markup)
+        if IMAGE_URLS["contacts"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["contacts"],
+                caption=TEXTS["contacts"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["contacts"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "✨ Акции и скидки":
-        safe_send_message(update, TEXTS["promo"], IMAGE_URLS["promo"], reply_markup)
+        if IMAGE_URLS["promo"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["promo"],
+                caption=TEXTS["promo"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["promo"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "🛫 Доставка":
-        safe_send_message(update, TEXTS["delivery"], IMAGE_URLS["delivery"], reply_markup)
+        if IMAGE_URLS["delivery"]:
+            await update.message.reply_photo(
+                photo=IMAGE_URLS["delivery"],
+                caption=TEXTS["delivery"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+        else:
+            await update.message.reply_text(
+                TEXTS["delivery"],
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
     
     elif text == "↩️ Назад":
-        update.message.reply_text("Возвращаемся в главное меню:", reply_markup=reply_markup)
+        await update.message.reply_text(
+            "Возвращаемся в главное меню:",
+            reply_markup=reply_markup
+        )
     
     else:
-        # 🔒 Логируем неизвестные команды
         log_security_event(user.id, user.username, f"UNKNOWN_COMMAND: {text}")
-        update.message.reply_text(
+        await update.message.reply_text(
             "Не совсем понял тебя ☺️ Выбери один из разделов меню:",
             reply_markup=reply_markup
         )
 
-# 🔒 Команды администратора для безопасности
-def admin_block_user(update: Update, context: CallbackContext):
-    """Команда для блокировки пользователя (только для админов)"""
+# 🔒 Команды администратора
+async def admin_block_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    ADMIN_IDS = [123456789]  # Замени на реальные ID админов
     user = update.message.from_user
     
-    # Проверяем, является ли пользователь администратором
-    # Добавь свои ID администраторов
-    ADMIN_IDS = [123456789]  # Замени на реальные ID админов
-    
     if user.id not in ADMIN_IDS:
-        update.message.reply_text("❌ У вас нет прав для выполнения этой команды")
+        await update.message.reply_text("❌ У вас нет прав для выполнения этой команды")
         return
     
     if context.args:
         try:
             user_id_to_block = int(context.args[0])
             BLOCKED_USERS.add(user_id_to_block)
-            update.message.reply_text(f"✅ Пользователь {user_id_to_block} заблокирован")
+            await update.message.reply_text(f"✅ Пользователь {user_id_to_block} заблокирован")
             logger.warning(f"🔒 Админ {user.id} заблокировал пользователя {user_id_to_block}")
         except ValueError:
-            update.message.reply_text("❌ Неверный формат ID пользователя")
+            await update.message.reply_text("❌ Неверный формат ID пользователя")
 
-def admin_unblock_user(update: Update, context: CallbackContext):
-    """Команда для разблокировки пользователя (только для админов)"""
-    user = update.message.from_user
+async def admin_unblock_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ADMIN_IDS = [123456789]  # Замени на реальные ID админов
+    user = update.message.from_user
     
     if user.id not in ADMIN_IDS:
-        update.message.reply_text("❌ У вас нет прав для выполнения этой команды")
+        await update.message.reply_text("❌ У вас нет прав для выполнения этой команды")
         return
     
     if context.args:
         try:
             user_id_to_unblock = int(context.args[0])
             BLOCKED_USERS.discard(user_id_to_unblock)
-            update.message.reply_text(f"✅ Пользователь {user_id_to_unblock} разблокирован")
+            await update.message.reply_text(f"✅ Пользователь {user_id_to_unblock} разблокирован")
             logger.warning(f"🔒 Админ {user.id} разблокировал пользователя {user_id_to_unblock}")
         except ValueError:
-            update.message.reply_text("❌ Неверный формат ID пользователя")
+            await update.message.reply_text("❌ Неверный формат ID пользователя")
 
 # Обработка ошибок
-def error_handler(update: Update, context: CallbackContext):
-    """Обработчик ошибок с логированием"""
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error = context.error
     user_info = ""
     
@@ -217,34 +284,28 @@ def error_handler(update: Update, context: CallbackContext):
         user_info = f" пользователь {user.id} ({user.username})"
     
     logger.error(f"❌ Ошибка{user_info}: {error}", exc_info=True)
-    
-    # Логируем серьезные ошибки как события безопасности
-    if "Forbidden" in str(error):
-        log_security_event(user.id if update and update.message else 0, 
-                         user.username if update and update.message else "unknown", 
-                         f"FORBIDDEN_ERROR: {error}")
 
 # Запуск бота
 def main():
     try:
-        updater = Updater(TOKEN, use_context=True)
-        dispatcher = updater.dispatcher
+        # Создаем приложение
+        application = Application.builder().token(TOKEN).build()
         
         # Обработчики команд
-        dispatcher.add_handler(CommandHandler("start", start))
-        dispatcher.add_handler(CommandHandler("block", admin_block_user))
-        dispatcher.add_handler(CommandHandler("unblock", admin_unblock_user))
-        dispatcher.add_handler(MessageHandler(Filters.text, handle_message))
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("block", admin_block_user))
+        application.add_handler(CommandHandler("unblock", admin_unblock_user))
+        application.add_handler(MessageHandler(filters.TEXT, handle_message))
         
         # Обработчик ошибок
-        dispatcher.add_error_handler(error_handler)
+        application.add_error_handler(error_handler)
         
         print("🎴 Безопасный бот Mysti Box запущен! Работает 24/7 на Railway!")
         print("🔒 Режим безопасности активирован")
+        print("🐍 Совместимость с Python 3.13 обеспечена")
         
         # Запускаем бота
-        updater.start_polling()
-        updater.idle()
+        application.run_polling()
         
     except Exception as e:
         logger.critical(f"❌ Критическая ошибка запуска бота: {e}")
